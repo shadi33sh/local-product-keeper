@@ -1,24 +1,12 @@
-import { db } from "./db.ts";
+import { db } from "./db.mjs";
 
-export interface ProductRow {
-  id: number;
-  name: string;
-  price: number;
-  description: string | null;
-  createdAt: string;
-}
-
-export function listProducts(): ProductRow[] {
+export function listProducts() {
   return db
     .prepare("SELECT id, name, price, description, createdAt FROM products ORDER BY id ASC")
-    .all() as unknown as ProductRow[];
+    .all();
 }
 
-export function createProduct(input: {
-  name: string;
-  price: number;
-  description?: string | null;
-}): ProductRow {
+export function createProduct(input) {
   const createdAt = new Date().toISOString();
   const result = db
     .prepare("INSERT INTO products (name, price, description, createdAt) VALUES (?, ?, ?, ?)")
@@ -26,5 +14,5 @@ export function createProduct(input: {
 
   return db
     .prepare("SELECT id, name, price, description, createdAt FROM products WHERE id = ?")
-    .get(Number(result.lastInsertRowid)) as unknown as ProductRow;
+    .get(Number(result.lastInsertRowid));
 }

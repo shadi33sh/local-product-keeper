@@ -1,16 +1,21 @@
 {
-  "name": "tanstack_start_ts",
+  "name": "local-product-keeper",
   "private": true,
   "sideEffects": false,
   "type": "module",
+  "main": "electron/main.cjs",
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
     "build:dev": "vite build --mode development",
+    "build:client": "cross-env NITRO_PRESET=node-server vite build",
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "server": "node --experimental-strip-types server/index.ts"
+    "server": "node server/index.mjs",
+    "electron:dev": "npm run build:client && electron .",
+    "electron:pack": "npm run build:client && electron-builder --dir",
+    "electron:dist": "npm run build:client && electron-builder --linux --win --mac"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -73,6 +78,9 @@
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^5.2.0",
+    "cross-env": "^10.1.0",
+    "electron": "^35.7.5",
+    "electron-builder": "^25.1.8",
     "eslint": "^9.32.0",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-prettier": "^5.2.6",
@@ -84,5 +92,33 @@
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.56.1",
     "vite": "^8.2.0"
+  },
+  "build": {
+    "appId": "com.local-product-keeper.app",
+    "productName": "Local Product Keeper",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      ".output/**",
+      "server/db.mjs",
+      "server/productRepository.mjs",
+      "server/index.mjs",
+      "electron/main.cjs",
+      "package.json"
+    ],
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ]
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.productivity"
+    }
   }
 }

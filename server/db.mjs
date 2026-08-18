@@ -3,10 +3,16 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-const documentsDir = path.join(os.homedir(), "Documents");
-const dbPath = path.join(documentsDir, "app-data.db");
+// When running inside Electron, main.cjs sets APP_DATA_DIR to
+// app.getPath('userData') so the database lives in the OS user-data folder.
+// In plain dev-mode (npm run server) it falls back to ~/Documents.
+const dataDir = process.env.APP_DATA_DIR
+  ? process.env.APP_DATA_DIR
+  : path.join(os.homedir(), "Documents");
 
-fs.mkdirSync(documentsDir, { recursive: true });
+export const dbPath = path.join(dataDir, "app-data.db");
+
+fs.mkdirSync(dataDir, { recursive: true });
 
 export const db = new DatabaseSync(dbPath);
 
@@ -20,16 +26,15 @@ db.exec(`
   );
 `);
 
-const { count } = db.prepare("SELECT COUNT(*) AS count FROM products").get() as {
-  count: number;
-};
+const row = db.prepare("SELECT COUNT(*) AS count FROM products").get();
+const count = row.count;
 
 if (count === 0) {
   const insert = db.prepare(
     "INSERT INTO products (name, price, description, createdAt) VALUES (?, ?, ?, ?)",
   );
   const now = new Date().toISOString();
-  const seed: Array<[string, number, string | null]> = [
+  const seed = [
     ["Notebook", 4.5, "A5 lined paper notebook"],
     ["Pen", 1.25, "Black ballpoint pen"],
     ["Backpack", 39.99, null],
@@ -40,5 +45,3 @@ if (count === 0) {
     insert.run(name, price, description, now);
   }
 }
-
-export { dbPath };
