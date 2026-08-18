@@ -2,6 +2,7 @@ import { DatabaseSync } from "node:sqlite";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { generateSeedData } from "./seedData.mjs";
 
 // When running inside Electron, main.cjs sets APP_DATA_DIR to
 // app.getPath('userData') so the database lives in the OS user-data folder.
@@ -30,18 +31,23 @@ const row = db.prepare("SELECT COUNT(*) AS count FROM products").get();
 const count = row.count;
 
 if (count === 0) {
-  const insert = db.prepare(
-    "INSERT INTO products (name, price, description, createdAt) VALUES (?, ?, ?, ?)",
-  );
-  const now = new Date().toISOString();
-  const seed = [
-    ["Notebook", 4.5, "A5 lined paper notebook"],
-    ["Pen", 1.25, "Black ballpoint pen"],
-    ["Backpack", 39.99, null],
-    ["Water Bottle", 12.0, "500ml stainless steel"],
-    ["Desk Lamp", 24.75, "LED, adjustable arm"],
-  ];
-  for (const [name, price, description] of seed) {
-    insert.run(name, price, description, now);
+  db.exec("BEGIN TRANSACTION;");
+  try {
+    const insert = db.prepare(
+      "INSERT INTO products (name, price, description, createdAt) VALUES (?, ?, ?, ?)",
+    );
+
+    const seedData = generateSeedData(2000);
+
+    for (const [name, price, description, now] of seedData) {
+      insert.run(name, price, description, now);
+    }
+
+    db.exec("COMMIT;");
+    console.log("Database successfully seeded with 2,000 products.");
+  } catch (error) {
+    db.exec("ROLLBACK;");
+    console.error("Failed to seed database:", error);
+    throw error;
   }
 }

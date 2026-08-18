@@ -81,7 +81,7 @@ async function fetchResToNodeRes(fetchRes, res) {
   res.writeHead(fetchRes.status, headers);
   if (fetchRes.body) {
     const reader = fetchRes.body.getReader();
-    for (;;) {
+    for (; ;) {
       const { done, value } = await reader.read();
       if (done) break;
       res.write(value);
